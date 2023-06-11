@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>정서희의 도박장</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        
+        h1 {
+            text-align: center;
+        }
+        
+        #game {
+            width: 400px;
+            margin: 0 auto;
+        }
+        
+        #result {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        
+        #buttons {
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        button {
+            padding: 5px 10px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>정서희의 도박장</h1>
+    <div id="game">
+        <div id="dealer-hand">
+            <h3>딜러의 카드:</h3>
+            <div id="dealer-cards"></div>
+            <div id="dealer-points"></div>
+        </div>
+        <div id="player-hand">
+            <h3>플레이어의 카드:</h3>
+            <div id="player-cards"></div>
+            <div id="player-points"></div>
+        </div>
+        <div id="result"></div>
+        <div id="buttons">
+            <button id="start-btn">게임 시작</button>
+            <button id="hit-btn">카드 더 받기</button>
+            <button id="stand-btn">멈추기</button>
+        </div>
+    </div>
+
+    <script>
+        // 카드 덱
+        const deck = [
+            { name: 'A', value: 1 },
+            { name: '2', value: 2 },
+            { name: '3', value: 3 },
+            { name: '4', value: 4 },
+            { name: '5', value: 5 },
+            { name: '6', value: 6 },
+            { name: '7', value: 7 },
+            { name: '8', value: 8 },
+            { name: '9', value: 9 },
+            { name: '10', value: 10 },
+            { name: 'J', value: 10 },
+            { name: 'Q', value: 10 },
+            { name: 'K', value: 10 }
+        ];
+
+        let dealerHand = [];
+        let playerHand = [];
+        let dealerPoints = 0;
+        let playerPoints = 0;
+        let gameEnded = false;
+
+        const dealerCardsElement = document.getElementById('dealer-cards');
+        const playerCardsElement = document.getElementById('player-cards');
+        const dealerPointsElement = document.getElementById('dealer-points');
+        const playerPointsElement = document.getElementById('player-points');
+        const resultElement = document.getElementById('result');
+        const startButton = document.getElementById('start-btn');
+        const hitButton = document.getElementById('hit-btn');
+        const standButton = document.getElementById('stand-btn');
+
+        startButton.addEventListener('click', startGame);
+        hitButton.addEventListener('click', hitCard);
+        standButton.addEventListener('click', stand);
+
+        function startGame() {
+            dealerHand = [];
+            playerHand = [];
+            dealerPoints = 0;
+            playerPoints = 0;
+            gameEnded = false;
+            resultElement.textContent = '';
+
+            shuffleDeck();
+            dealCards();
+            updateUI();
+        }
+
+        function shuffleDeck() {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+
+        function dealCards() {
+            dealerHand.push(deck.pop());
+            dealerHand.push(deck.pop());
+            playerHand.push(deck.pop());
+            playerHand.push(deck.pop());
+            calculatePoints();
+        }
+
+        function calculatePoints() {
+            dealerPoints = getHandPoints(dealerHand);
+            playerPoints = getHandPoints(playerHand);
+        }
+
+        function getHandPoints(hand) {
+            let points = 0;
+            let hasAce = false;
+
+            for (let card of hand) {
+                points += card.value;
+                if (card.name === 'A') {
+                    hasAce = true;
+                }
+            }
+
+            if (hasAce && points + 10 <= 21) {
+                points += 10;
+            }
+
+            return points;
+        }
+
+        function updateUI() {
+            dealerCardsElement.textContent = '';
+            playerCardsElement.textContent = '';
+
+            for (let card of dealerHand) {
+                const cardElement = document.createElement('span');
+                cardElement.textContent = card.name;
+                dealerCardsElement.appendChild(cardElement);
+            }
+
+            for (let card of playerHand) {
+                const cardElement = document.createElement('span');
+                cardElement.textContent = card.name;
+                playerCardsElement.appendChild(cardElement);
+            }
+
+            dealerPointsElement.textContent = `Points: ${dealerPoints}`;
+            playerPointsElement.textContent = `Points: ${playerPoints}`;
+        }
+
+        function hitCard() {
+            if (gameEnded) return;
+
+            playerHand.push(deck.pop());
+            calculatePoints();
+            updateUI();
+
+            if (playerPoints > 21) {
+                endGame(false);
+            }
+        }
+
+        function stand() {
+            if (gameEnded) return;
+
+            while (dealerPoints < 17) {
+                dealerHand.push(deck.pop());
+                calculatePoints();
+                updateUI();
+            }
+
+            endGame(true);
+        }
+
+        function endGame(showResult) {
+            gameEnded = true;
+
+            if (showResult) {
+                if (playerPoints > 21 || (dealerPoints <= 21 && dealerPoints > playerPoints)) {
+                    resultElement.textContent = '딜러 승리!';
+                } else if (dealerPoints > 21 || playerPoints > dealerPoints) {
+                    resultElement.textContent = '플레이어 승리!';
+                } else {
+                    resultElement.textContent = '무승부!';
+                }
+            } else {
+                resultElement.textContent = '플레이어 패배! 하하 애송이자식';
+            }
+        }
+    </script>
+</body>
+</html>
